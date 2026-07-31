@@ -1,5 +1,5 @@
 import { Injectable } from '@nestjs/common';
-import { Response } from 'express';
+import { Request, Response } from 'express';
 import { REFRESH_COOKIE_MAX_AGE, REFRESH_COOKIE_NAME } from './auth.constants';
 
 @Injectable()
@@ -10,6 +10,12 @@ export class CookieService {
     sameSite: 'strict' as const,
     path: '/auth',
   };
+
+  getRefreshToken(req: Request): string | undefined {
+    return (req.cookies as Record<string, string> | undefined)?.[
+      REFRESH_COOKIE_NAME
+    ];
+  }
 
   setRefreshCookie(res: Response, token: string): void {
     res.cookie(REFRESH_COOKIE_NAME, token, {

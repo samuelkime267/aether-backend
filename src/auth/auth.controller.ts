@@ -23,7 +23,6 @@ import { RegisterDto } from './dto/register.dto';
 import { RequestNonceDto } from './dto/request-nonce.dto';
 import { VerifyWalletDto } from './dto/verify-wallet.dto';
 import { RefreshTokenGuard } from './guards/refresh-token.guard';
-import { REFRESH_COOKIE_NAME } from './auth.constants';
 import { getConfig } from '../config/env';
 
 @Controller('auth')
@@ -104,8 +103,8 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Ip() ip: string,
   ) {
-    const token: unknown = req.cookies?.[REFRESH_COOKIE_NAME];
-    if (typeof token !== 'string') {
+    const token = this.cookieService.getRefreshToken(req);
+    if (!token) {
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
     const { refreshToken, ...result } = await this.authService.refresh(
@@ -122,10 +121,7 @@ export class AuthController {
   @UseGuards(RefreshTokenGuard)
   @Post('logout')
   async logout(@Req() req: Request, @Res({ passthrough: true }) res: Response) {
-    const token: unknown = req.cookies?.[REFRESH_COOKIE_NAME];
-    await this.authService.logout(
-      typeof token === 'string' ? token : undefined,
-    );
+    await this.authService.logout(this.cookieService.getRefreshToken(req));
     this.cookieService.clearRefreshCookie(res);
     return { message: 'Logged out' };
   }

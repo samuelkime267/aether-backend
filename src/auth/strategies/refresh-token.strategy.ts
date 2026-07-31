@@ -3,7 +3,7 @@ import { PassportStrategy } from '@nestjs/passport';
 import { Request } from 'express';
 import { Strategy } from 'passport-jwt';
 import { getConfig } from '../../config/env';
-import { REFRESH_COOKIE_NAME } from '../auth.constants';
+import { CookieService } from '../cookie.service';
 import { RefreshTokenPayload } from '../token.service';
 
 export interface RefreshTokenUser {
@@ -16,12 +16,10 @@ export class RefreshTokenStrategy extends PassportStrategy(
   Strategy,
   'refresh',
 ) {
-  constructor() {
+  constructor(private readonly cookieService: CookieService) {
     super({
-      jwtFromRequest: (req: Request) => {
-        const token: unknown = req.cookies?.[REFRESH_COOKIE_NAME];
-        return typeof token === 'string' ? token : null;
-      },
+      jwtFromRequest: (req: Request) =>
+        this.cookieService.getRefreshToken(req) ?? null,
       ignoreExpiration: false,
       secretOrKey: getConfig().jwtSecret,
     });
