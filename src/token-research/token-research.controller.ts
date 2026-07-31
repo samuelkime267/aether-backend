@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { TokenResearchService } from './token-research.service';
 import { CreateTokenResearchDto } from './dto/create-token-research.dto';
 import { UpdateTokenResearchDto } from './dto/update-token-research.dto';
@@ -23,7 +31,10 @@ export class TokenResearchController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateTokenResearchDto: UpdateTokenResearchDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateTokenResearchDto: UpdateTokenResearchDto,
+  ) {
     return this.tokenResearchService.update(+id, updateTokenResearchDto);
   }
 

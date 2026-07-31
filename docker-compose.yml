@@ -2,7 +2,7 @@ version: '3.8'
 
 services:
   db:
-    image: postgres:15-alpine
+    image: aether-pgvector:pg17
     container_name: aether-db
     restart: always
     environment:
@@ -15,7 +15,7 @@ services:
       - aether-db-data:/var/lib/postgresql/data
 
   redis:
-    image: redis:7-alpine
+    image: redis:alpine
     container_name: aether-redis
     restart: always
     ports:

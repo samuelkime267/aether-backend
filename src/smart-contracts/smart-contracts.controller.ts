@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { SmartContractsService } from './smart-contracts.service';
 import { CreateSmartContractDto } from './dto/create-smart-contract.dto';
 import { UpdateSmartContractDto } from './dto/update-smart-contract.dto';
@@ -23,7 +31,10 @@ export class SmartContractsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateSmartContractDto: UpdateSmartContractDto) {
+  update(
+    @Param('id') id: string,
+    @Body() updateSmartContractDto: UpdateSmartContractDto,
+  ) {
     return this.smartContractsService.update(+id, updateSmartContractDto);
   }
 

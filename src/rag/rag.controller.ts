@@ -1,4 +1,12 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+} from '@nestjs/common';
 import { RagService } from './rag.service';
 import { CreateRagDto } from './dto/create-rag.dto';
 import { UpdateRagDto } from './dto/update-rag.dto';
