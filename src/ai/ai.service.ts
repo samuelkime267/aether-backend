@@ -4,7 +4,7 @@ import { UpdateAiDto } from './dto/update-ai.dto';
 
 @Injectable()
 export class AiService {
-  create(createAiDto: CreateAiDto) {
+  create(_createAiDto: CreateAiDto) {
     return 'This action adds a new ai';
   }
 
@@ -16,7 +16,7 @@ export class AiService {
     return `This action returns a #${id} ai`;
   }
 
-  update(id: number, updateAiDto: UpdateAiDto) {
+  update(id: number, _updateAiDto: UpdateAiDto) {
     return `This action updates a #${id} ai`;
   }
 

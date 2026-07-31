@@ -4,7 +4,7 @@ import { UpdatePortfolioDto } from './dto/update-portfolio.dto';
 
 @Injectable()
 export class PortfolioService {
-  create(createPortfolioDto: CreatePortfolioDto) {
+  create(_createPortfolioDto: CreatePortfolioDto) {
     return 'This action adds a new portfolio';
   }
 
@@ -16,7 +16,7 @@ export class PortfolioService {
     return `This action returns a #${id} portfolio`;
   }
 
-  update(id: number, updatePortfolioDto: UpdatePortfolioDto) {
+  update(id: number, _updatePortfolioDto: UpdatePortfolioDto) {
     return `This action updates a #${id} portfolio`;
   }
 

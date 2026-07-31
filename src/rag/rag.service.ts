@@ -4,7 +4,7 @@ import { UpdateRagDto } from './dto/update-rag.dto';
 
 @Injectable()
 export class RagService {
-  create(createRagDto: CreateRagDto) {
+  create(_createRagDto: CreateRagDto) {
     return 'This action adds a new rag';
   }
 
@@ -16,7 +16,7 @@ export class RagService {
     return `This action returns a #${id} rag`;
   }
 
-  update(id: number, updateRagDto: UpdateRagDto) {
+  update(id: number, _updateRagDto: UpdateRagDto) {
     return `This action updates a #${id} rag`;
   }
 

@@ -4,7 +4,7 @@ import { UpdateSmartContractDto } from './dto/update-smart-contract.dto';
 
 @Injectable()
 export class SmartContractsService {
-  create(createSmartContractDto: CreateSmartContractDto) {
+  create(_createSmartContractDto: CreateSmartContractDto) {
     return 'This action adds a new smartContract';
   }
 
@@ -16,7 +16,7 @@ export class SmartContractsService {
     return `This action returns a #${id} smartContract`;
   }
 
-  update(id: number, updateSmartContractDto: UpdateSmartContractDto) {
+  update(id: number, _updateSmartContractDto: UpdateSmartContractDto) {
     return `This action updates a #${id} smartContract`;
   }
 

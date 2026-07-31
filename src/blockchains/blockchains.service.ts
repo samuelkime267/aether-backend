@@ -4,7 +4,7 @@ import { UpdateBlockchainDto } from './dto/update-blockchain.dto';
 
 @Injectable()
 export class BlockchainsService {
-  create(createBlockchainDto: CreateBlockchainDto) {
+  create(_createBlockchainDto: CreateBlockchainDto) {
     return 'This action adds a new blockchain';
   }
 
@@ -16,7 +16,7 @@ export class BlockchainsService {
     return `This action returns a #${id} blockchain`;
   }
 
-  update(id: number, updateBlockchainDto: UpdateBlockchainDto) {
+  update(id: number, _updateBlockchainDto: UpdateBlockchainDto) {
     return `This action updates a #${id} blockchain`;
   }
 

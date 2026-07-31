@@ -1,9 +1,34 @@
 import { Module } from '@nestjs/common';
-import { AuthService } from './auth.service';
+import { JwtModule } from '@nestjs/jwt';
+import { PassportModule } from '@nestjs/passport';
 import { AuthController } from './auth.controller';
+import { AuthService } from './auth.service';
+import { getConfig } from '../config/env';
+import { CookieService } from './cookie.service';
+import { JwtStrategy } from './jwt.strategy';
+import { SiweService } from './siwe.service';
+import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
+import { TokenService } from './token.service';
 
 @Module({
+  imports: [
+    PassportModule,
+    JwtModule.registerAsync({
+      global: true,
+      useFactory: () => ({
+        secret: getConfig().jwtSecret,
+      }),
+    }),
+  ],
   controllers: [AuthController],
-  providers: [AuthService],
+  providers: [
+    AuthService,
+    TokenService,
+    CookieService,
+    SiweService,
+    JwtStrategy,
+    RefreshTokenStrategy,
+  ],
+  exports: [TokenService],
 })
 export class AuthModule {}

@@ -4,7 +4,7 @@ import { UpdateChatDto } from './dto/update-chat.dto';
 
 @Injectable()
 export class ChatsService {
-  create(createChatDto: CreateChatDto) {
+  create(_createChatDto: CreateChatDto) {
     return 'This action adds a new chat';
   }
 
@@ -16,7 +16,7 @@ export class ChatsService {
     return `This action returns a #${id} chat`;
   }
 
-  update(id: number, updateChatDto: UpdateChatDto) {
+  update(id: number, _updateChatDto: UpdateChatDto) {
     return `This action updates a #${id} chat`;
   }
 

@@ -1,6 +1,17 @@
-import { ExtractJwt, Strategy } from 'passport-jwt';
-import { PassportStrategy } from '@nestjs/passport';
 import { Injectable } from '@nestjs/common';
+import { PassportStrategy } from '@nestjs/passport';
+import { AuthType } from '@prisma/client';
+import { ExtractJwt, Strategy } from 'passport-jwt';
+import { getConfig } from '../config/env';
+import { AccessTokenPayload } from './token.service';
+
+export interface JwtUser {
+  id: string;
+  address: string | null;
+  email: string | null;
+  role: string;
+  authType: AuthType;
+}
 
 @Injectable()
 export class JwtStrategy extends PassportStrategy(Strategy) {
@@ -8,12 +19,17 @@ export class JwtStrategy extends PassportStrategy(Strategy) {
     super({
       jwtFromRequest: ExtractJwt.fromAuthHeaderAsBearerToken(),
       ignoreExpiration: false,
-      secretOrKey:
-        process.env.JWT_SECRET || 'super_secret_jwt_key_change_in_production',
+      secretOrKey: getConfig().jwtSecret,
     });
   }
 
-  async validate(payload: any) {
-    return { id: payload.sub, email: payload.email, role: payload.role };
+  validate(payload: AccessTokenPayload): JwtUser {
+    return {
+      id: payload.sub,
+      address: payload.address ?? null,
+      email: payload.email ?? null,
+      role: payload.role,
+      authType: payload.authType,
+    };
   }
 }

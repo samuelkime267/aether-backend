@@ -49,6 +49,15 @@ src/
    ```bash
    cp .env.example .env
    ```
+   Required variables:
+   - `DATABASE_URL` — PostgreSQL connection string (Prisma reads it at runtime).
+   - `JWT_SECRET` — JWT signing secret. **There is no fallback; the app fails to start without it.** Generate one:
+     ```bash
+     node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"
+     ```
+   - `FE_URL` — single frontend origin allowed by CORS. Required in production (`NODE_ENV=production`); defaults to `http://localhost:3000` in dev.
+
+   Optional variables: `NODE_ENV` (`development` | `test` | `production`), `PORT` (default `3000`), `ACCESS_TOKEN_TTL` (default `15m`), `REFRESH_TOKEN_TTL` (default `7d`).
 
 3. **Start Services via Docker**:
    Ensure Docker is running, then start PostgreSQL and Redis:

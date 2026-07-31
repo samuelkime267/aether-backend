@@ -4,7 +4,7 @@ import { UpdatePromptDto } from './dto/update-prompt.dto';
 
 @Injectable()
 export class PromptsService {
-  create(createPromptDto: CreatePromptDto) {
+  create(_createPromptDto: CreatePromptDto) {
     return 'This action adds a new prompt';
   }
 
@@ -16,7 +16,7 @@ export class PromptsService {
     return `This action returns a #${id} prompt`;
   }
 
-  update(id: number, updatePromptDto: UpdatePromptDto) {
+  update(id: number, _updatePromptDto: UpdatePromptDto) {
     return `This action updates a #${id} prompt`;
   }
 

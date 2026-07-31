@@ -4,7 +4,7 @@ import { UpdateWalletDto } from './dto/update-wallet.dto';
 
 @Injectable()
 export class WalletsService {
-  create(createWalletDto: CreateWalletDto) {
+  create(_createWalletDto: CreateWalletDto) {
     return 'This action adds a new wallet';
   }
 
@@ -16,7 +16,7 @@ export class WalletsService {
     return `This action returns a #${id} wallet`;
   }
 
-  update(id: number, updateWalletDto: UpdateWalletDto) {
+  update(id: number, _updateWalletDto: UpdateWalletDto) {
     return `This action updates a #${id} wallet`;
   }
 

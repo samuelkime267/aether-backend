@@ -4,7 +4,7 @@ import { UpdateTokenResearchDto } from './dto/update-token-research.dto';
 
 @Injectable()
 export class TokenResearchService {
-  create(createTokenResearchDto: CreateTokenResearchDto) {
+  create(_createTokenResearchDto: CreateTokenResearchDto) {
     return 'This action adds a new tokenResearch';
   }
 
@@ -16,7 +16,7 @@ export class TokenResearchService {
     return `This action returns a #${id} tokenResearch`;
   }
 
-  update(id: number, updateTokenResearchDto: UpdateTokenResearchDto) {
+  update(id: number, _updateTokenResearchDto: UpdateTokenResearchDto) {
     return `This action updates a #${id} tokenResearch`;
   }
 

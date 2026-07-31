@@ -4,7 +4,7 @@ import { UpdateMemoryDto } from './dto/update-memory.dto';
 
 @Injectable()
 export class MemoryService {
-  create(createMemoryDto: CreateMemoryDto) {
+  create(_createMemoryDto: CreateMemoryDto) {
     return 'This action adds a new memory';
   }
 
@@ -16,7 +16,7 @@ export class MemoryService {
     return `This action returns a #${id} memory`;
   }
 
-  update(id: number, updateMemoryDto: UpdateMemoryDto) {
+  update(id: number, _updateMemoryDto: UpdateMemoryDto) {
     return `This action updates a #${id} memory`;
   }
 
