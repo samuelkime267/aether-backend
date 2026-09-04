@@ -16,7 +16,8 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
-  app.set('trust proxy', true);
+  const server = app.getHttpAdapter().getInstance() as Express;
+  server.set('trust proxy', true);
 
   app.enableCors({
     origin: env.feUrl,
@@ -45,8 +46,6 @@ async function bootstrap() {
     .build();
 
   const document = SwaggerModule.createDocument(app, config);
-
-  const server = app.getHttpAdapter().getInstance() as Express;
 
   server.get(
     '/doc',
