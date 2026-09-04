@@ -14,8 +14,12 @@ export class PrismaService
         'DATABASE_URL is not set. Provide it in the environment or a local .env file.',
       );
     }
+    const isProd = process.env.NODE_ENV === 'production';
     super({
-      adapter: new PrismaPg({ connectionString }),
+      adapter: new PrismaPg({
+        connectionString,
+        ...(isProd ? { ssl: { rejectUnauthorized: false } } : {}),
+      }),
     });
   }
 
