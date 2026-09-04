@@ -1,0 +1,30 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "references": {
+    "frontend": {
+      "path": "../frontend",
+      "description": "Aether AI frontend (Next.js). Read for frontend context: pages, components, API calls, types. READ-ONLY: never edit files under ../frontend."
+    }
+  },
+  "permission": {
+    "external_directory": {
+      "**/frontend/**": "allow",
+      "../frontend/**": "allow"
+    },
+    "edit": {
+      "*": "allow",
+      "**/frontend/**": "deny",
+      "../frontend/**": "deny"
+    },
+    "bash": {
+      "*": "allow",
+      "Set-Content *frontend*": "deny",
+      "Add-Content *frontend*": "deny",
+      "Remove-Item *frontend*": "deny",
+      "New-Item *frontend*": "deny",
+      "Copy-Item *frontend*": "deny",
+      "Move-Item *frontend*": "deny",
+      "git -C *frontend*": "deny"
+    }
+  }
+}

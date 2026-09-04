@@ -23,6 +23,7 @@ NestJS 11 + TypeScript backend for "Aether AI" (Web3 AI OS). Single package, Com
 - **CORS is a single origin (`FE_URL`)** in `src/main.ts`; there is no wildcard/reflect (`origin: true`) fallback anymore. Dev default is `http://localhost:3000` via `getConfig()`. `FE_URL` also backs the SIWE origin/domain fallback in `auth.controller.ts`.
 - **`.env.example` is committed** and defines the env contract (`DATABASE_URL`, `JWT_SECRET`, `FE_URL`, `PORT`, `NODE_ENV`, token TTLs). `.env` itself remains gitignored; copy the example and generate `JWT_SECRET` with `node -e "console.log(require('crypto').randomBytes(48).toString('base64url'))"`.
 - Husky + commitlint are devDependencies/config only — **no hooks are installed** (no `.husky/`, no `prepare` script), so commits are not auto-validated.
+- The frontend lives at `../frontend` (Next.js) and is **READ-ONLY reference only** — never edit files there. Enforced by `permission.edit` denies in `opencode.json`; also treat it as a hard rule in instructions.
 
 ## Architecture
 
