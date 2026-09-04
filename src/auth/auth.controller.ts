@@ -184,7 +184,9 @@ export class AuthController {
     @Ip() ip: string,
   ) {
     const token = this.cookieService.getRefreshToken(req);
+    console.log('[auth/refresh]', { hasCookie: !!token, cookies: Object.keys(req.cookies || {}) });
     if (!token) {
+      console.error('[auth/refresh] FAIL: no refresh cookie found');
       throw new UnauthorizedException('Invalid or expired refresh token');
     }
     const { refreshToken, ...result } = await this.authService.refresh(
@@ -192,6 +194,7 @@ export class AuthController {
       this.resolveContext(req, ip),
       dto.address,
     );
+    console.log('[auth/refresh] OK', { userId: result.user.id });
     this.cookieService.setRefreshCookie(res, refreshToken);
     return result;
   }
@@ -228,12 +231,16 @@ export class AuthController {
     description: 'Google OAuth not configured (GOOGLE_CLIENT_ID/SECRET missing)',
   })
   googleLogin(@Req() req: Request, @Res() res: Response) {
+    console.log('[google/login] initiated', { host: req.headers.host, protocol: req.protocol });
     if (!getConfig().googleClientId) {
+      console.error('[google/login] FAIL: GOOGLE_CLIENT_ID not set');
       throw new ServiceUnavailableException('Google OAuth is not configured');
     }
     const redirectUri = this.buildCallbackUri(req);
+    console.log('[google/login] redirect URI:', redirectUri);
     const state = this.googleService.signState();
     const url = this.googleService.buildAuthorizationUrl(redirectUri, state);
+    console.log('[google/login] redirecting to Google');
     res.redirect(HttpStatus.FOUND, url);
   }
 
@@ -262,27 +269,37 @@ export class AuthController {
 
     try {
       const { code, state } = req.query as { code?: string; state?: string };
+      console.log('[google/callback] incoming', { hasCode: !!code, hasState: !!state });
       if (!state || !this.googleService.verifyState(state)) {
+        console.error('[google/callback] FAIL: invalid or missing state');
         throw new UnauthorizedException('Invalid OAuth state');
       }
       if (!code) {
+        console.error('[google/callback] FAIL: missing authorization code');
         throw new UnauthorizedException('Missing authorization code');
       }
 
       const redirectUri = this.buildCallbackUri(req);
+      console.log('[google/callback] exchanging code', { redirectUri });
       const tokens = await this.googleService.exchangeCodeForTokens(
         code,
         redirectUri,
       );
+      console.log('[google/callback] code exchanged OK', { hasIdToken: !!tokens.id_token });
+
+      console.log('[google/callback] finding/creating user...');
       const user = await this.authService.findOrCreateGoogleUser(
         tokens.id_token,
       );
+      console.log('[google/callback] user found', { userId: user.id });
 
       const ticket = this.googleService.signLoginTicket(user.id);
       const successUrl = new URL('/auth/callback', feUrl);
       successUrl.searchParams.set('ticket', ticket);
+      console.log('[google/callback] redirecting to FE', { successUrl: successUrl.toString() });
       return res.redirect(HttpStatus.FOUND, successUrl.toString());
     } catch (error) {
+      console.error('[google/callback] CAUGHT:', error);
       if (res.headersSent) {
         throw error;
       }
@@ -313,13 +330,21 @@ export class AuthController {
     @Res({ passthrough: true }) res: Response,
     @Ip() ip: string,
   ) {
-    const { sub: userId } = this.googleService.verifyLoginTicket(dto.ticket);
-    const { refreshToken, ...result } = await this.authService.googleSignIn(
-      userId,
-      this.resolveContext(req, ip),
-    );
-    this.cookieService.setRefreshCookie(res, refreshToken);
-    return result;
+    console.log('[google/token] received ticket exchange request', { hasTicket: !!dto.ticket });
+    try {
+      const { sub: userId } = this.googleService.verifyLoginTicket(dto.ticket);
+      console.log('[google/token] ticket verified', { userId });
+      const { refreshToken, ...result } = await this.authService.googleSignIn(
+        userId,
+        this.resolveContext(req, ip),
+      );
+      console.log('[google/token] session created', { userId: result.user.id });
+      this.cookieService.setRefreshCookie(res, refreshToken);
+      return result;
+    } catch (error) {
+      console.error('[google/token] FAIL:', error);
+      throw error;
+    }
   }
 
   @ApiBearerAuth()
