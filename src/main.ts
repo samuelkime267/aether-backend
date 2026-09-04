@@ -16,6 +16,8 @@ async function bootstrap() {
 
   app.use(cookieParser());
 
+  app.set('trust proxy', true);
+
   app.enableCors({
     origin: env.feUrl,
     credentials: true,
