@@ -15,18 +15,23 @@ import {
 } from './auth.constants';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
+import { GoogleService } from './google.service';
 import { SiweService } from './siwe.service';
 import { TokenService } from './token.service';
 
 export interface SafeUser {
   id: string;
   address: string | null;
+  walletAddress: string | null;
   email: string | null;
+  name: string;
   username: string | null;
   firstName: string | null;
   lastName: string | null;
   role: string;
   tier: string;
+  authType: AuthType;
+  googleId?: string | null;
   createdAt: Date;
 }
 
@@ -51,6 +56,24 @@ export interface AuthResult {
 export interface MeResult {
   user: SafeUser;
   authType: AuthType;
+  settings?: UserSettingsSummary | null;
+}
+
+export interface UserSettingsSummary {
+  selectedModel: string;
+  saveHistory: boolean;
+  compactSidebar: boolean;
+}
+
+export interface GoogleAuthResult extends AuthResult {
+  isNewUser: boolean;
+  picture?: string | null;
+}
+
+export interface UpdateProfileInput {
+  username?: string;
+  firstName?: string;
+  lastName?: string;
 }
 
 @Injectable()
@@ -59,6 +82,7 @@ export class AuthService {
     private readonly prisma: PrismaService,
     private readonly tokenService: TokenService,
     private readonly siweService: SiweService,
+    private readonly googleService: GoogleService,
   ) {}
 
   async requestNonce(input: {
@@ -142,7 +166,7 @@ export class AuthService {
       accessToken: await this.tokenService.signAccessToken(user, 'WALLET'),
       refreshToken: session.refreshToken,
       authType: 'WALLET',
-      user: this.toSafeUser(user),
+      user: this.toSafeUser(user, 'WALLET'),
     };
   }
 
@@ -184,7 +208,7 @@ export class AuthService {
       accessToken: await this.tokenService.signAccessToken(user, 'CREDENTIALS'),
       refreshToken: session.refreshToken,
       authType: 'CREDENTIALS',
-      user: this.toSafeUser(user),
+      user: this.toSafeUser(user, 'CREDENTIALS'),
     };
   }
 
@@ -205,7 +229,174 @@ export class AuthService {
       accessToken: await this.tokenService.signAccessToken(user, 'CREDENTIALS'),
       refreshToken: session.refreshToken,
       authType: 'CREDENTIALS',
-      user: this.toSafeUser(user),
+      user: this.toSafeUser(user, 'CREDENTIALS'),
+    };
+  }
+
+  async googleAuth(
+    idToken: string,
+    ctx: AuthContext,
+  ): Promise<GoogleAuthResult> {
+    const user = await this.findOrCreateGoogleUser(idToken);
+    const session = await this.createSession(user.id, ctx, 'GOOGLE');
+    return {
+      accessToken: await this.tokenService.signAccessToken(user, 'GOOGLE'),
+      refreshToken: session.refreshToken,
+      authType: 'GOOGLE',
+      user: this.toSafeUser(user, 'GOOGLE'),
+      isNewUser: false,
+      picture: null,
+    };
+  }
+
+  async findOrCreateGoogleUser(idToken: string): Promise<User> {
+    const googleUser = await this.googleService.verifyIdToken(idToken);
+    const email = googleUser.email;
+    if (!email) {
+      throw new UnauthorizedException('Google account has no verified email');
+    }
+    if (googleUser.email_verified === false) {
+      throw new UnauthorizedException('Google email is not verified');
+    }
+
+    const user = await this.prisma.$transaction(async (tx) => {
+      const existing = await tx.user.findFirst({
+        where: {
+          OR: [{ googleId: googleUser.sub }, { email }],
+        },
+      });
+
+      if (existing) {
+        const updates: Record<string, unknown> = {};
+        if (!existing.googleId && googleUser.sub) {
+          updates.googleId = googleUser.sub;
+        }
+        if (!existing.email && email) {
+          updates.email = email;
+        }
+        if (existing.firstName == null && googleUser.given_name) {
+          updates.firstName = googleUser.given_name;
+        }
+        if (existing.lastName == null && googleUser.family_name) {
+          updates.lastName = googleUser.family_name;
+        }
+        if (Object.keys(updates).length === 0) {
+          return existing;
+        }
+        return tx.user.update({
+          where: { id: existing.id },
+          data: updates,
+        });
+      }
+
+      return tx.user.create({
+        data: {
+          email,
+          googleId: googleUser.sub,
+          firstName: googleUser.given_name ?? null,
+          lastName: googleUser.family_name ?? null,
+          username: undefined,
+        },
+      });
+    });
+
+    return user;
+  }
+
+  async googleSignIn(userId: string, ctx: AuthContext): Promise<AuthResult> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+    const session = await this.createSession(user.id, ctx, 'GOOGLE');
+    return {
+      accessToken: await this.tokenService.signAccessToken(user, 'GOOGLE'),
+      refreshToken: session.refreshToken,
+      authType: 'GOOGLE',
+      user: this.toSafeUser(user, 'GOOGLE'),
+    };
+  }
+
+  async updateProfile(
+    userId: string,
+    input: UpdateProfileInput,
+  ): Promise<SafeUser> {
+    const user = await this.prisma.user.findUnique({ where: { id: userId } });
+    if (!user) {
+      throw new UnauthorizedException();
+    }
+
+    const data: Record<string, unknown> = {};
+    if (input.username !== undefined) {
+      data.username = input.username || null;
+    }
+    if (input.firstName !== undefined) {
+      data.firstName = input.firstName || null;
+    }
+    if (input.lastName !== undefined) {
+      data.lastName = input.lastName || null;
+    }
+
+    let updated: User;
+    try {
+      updated = await this.prisma.user.update({
+        where: { id: userId },
+        data,
+      });
+    } catch (error) {
+      if (this.isUniqueViolation(error)) {
+        throw new ConflictException('Username is already in use');
+      }
+      throw error;
+    }
+    return this.toSafeUser(updated);
+  }
+
+  async getSettings(
+    userId: string,
+  ): Promise<UserSettingsSummary> {
+    let settings = await this.prisma.userSettings.findUnique({
+      where: { userId },
+    });
+    if (!settings) {
+      settings = await this.prisma.userSettings.create({
+        data: { userId },
+      });
+    }
+    return this.toSettingsSummary(settings);
+  }
+
+  async updateSettings(
+    userId: string,
+    patch: Partial<UserSettingsSummary>,
+  ): Promise<UserSettingsSummary> {
+    const existing =
+      (await this.prisma.userSettings.findUnique({ where: { userId } })) ??
+      (await this.prisma.userSettings.create({ data: { userId } }));
+    const settings = await this.prisma.userSettings.update({
+      where: { id: existing.id },
+      data: {
+        ...(patch.selectedModel !== undefined && {
+          selectedModel: patch.selectedModel,
+        }),
+        ...(patch.saveHistory !== undefined && {
+          saveHistory: patch.saveHistory,
+        }),
+        ...(patch.compactSidebar !== undefined && {
+          compactSidebar: patch.compactSidebar,
+        }),
+      },
+    });
+    return this.toSettingsSummary(settings);
+  }
+
+  private toSettingsSummary(
+    settings: { selectedModel: string; saveHistory: boolean; compactSidebar: boolean },
+  ): UserSettingsSummary {
+    return {
+      selectedModel: settings.selectedModel,
+      saveHistory: settings.saveHistory,
+      compactSidebar: settings.compactSidebar,
     };
   }
 
@@ -270,7 +461,7 @@ export class AuthService {
       ),
       refreshToken: newRefreshToken,
       authType: session.authType,
-      user: this.toSafeUser(user),
+      user: this.toSafeUser(user, session.authType),
     };
   }
 
@@ -294,7 +485,11 @@ export class AuthService {
     if (!user) {
       throw new UnauthorizedException();
     }
-    return { user: this.toSafeUser(user), authType };
+    return {
+      user: this.toSafeUser(user, authType),
+      authType,
+      settings: await this.getSettings(userId),
+    };
   }
 
   private async createSession(
@@ -377,17 +572,39 @@ export class AuthService {
     );
   }
 
-  private toSafeUser(user: User): SafeUser {
+  toSafeUser(user: User, authType?: AuthType): SafeUser {
     return {
       id: user.id,
       address: user.address,
+      walletAddress: user.address,
       email: user.email,
+      name: this.deriveDisplayName(user),
       username: user.username,
       firstName: user.firstName,
       lastName: user.lastName,
       role: user.role,
       tier: user.tier,
+      authType: authType ?? 'CREDENTIALS',
+      googleId: user.googleId,
       createdAt: user.createdAt,
     };
+  }
+
+  private deriveDisplayName(user: User): string {
+    if (user.username) {
+      return user.username;
+    }
+    if (user.firstName) {
+      return user.lastName
+        ? `${user.firstName} ${user.lastName}`
+        : user.firstName;
+    }
+    if (user.address) {
+      return `${user.address.slice(0, 6)}...${user.address.slice(-4)}`;
+    }
+    if (user.email) {
+      return user.email.split('@')[0] || 'User';
+    }
+    return 'User';
   }
 }

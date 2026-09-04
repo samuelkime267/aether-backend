@@ -10,6 +10,9 @@ export interface EnvConfig {
   feUrl: string;
   accessTokenTtl: StringValue;
   refreshTokenTtl: StringValue;
+  googleClientId?: string;
+  googleClientSecret?: string;
+  googleTicketSecret?: string;
 }
 
 const DEFAULT_PORT = 3000;
@@ -57,6 +60,9 @@ export function loadConfig(): EnvConfig {
     refreshTokenTtl:
       (process.env.REFRESH_TOKEN_TTL as StringValue | undefined) ||
       DEFAULT_REFRESH_TOKEN_TTL,
+    googleClientId: process.env.GOOGLE_CLIENT_ID || undefined,
+    googleClientSecret: process.env.GOOGLE_CLIENT_SECRET || undefined,
+    googleTicketSecret: process.env.GOOGLE_TICKET_SECRET || undefined,
   };
 }
 

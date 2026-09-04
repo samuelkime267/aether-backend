@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller';
 import { AuthService } from './auth.service';
 import { getConfig } from '../config/env';
 import { CookieService } from './cookie.service';
+import { GoogleService } from './google.service';
 import { JwtStrategy } from './jwt.strategy';
 import { SiweService } from './siwe.service';
 import { RefreshTokenStrategy } from './strategies/refresh-token.strategy';
@@ -26,9 +27,10 @@ import { TokenService } from './token.service';
     TokenService,
     CookieService,
     SiweService,
+    GoogleService,
     JwtStrategy,
     RefreshTokenStrategy,
   ],
-  exports: [TokenService],
+  exports: [TokenService, AuthService],
 })
 export class AuthModule {}

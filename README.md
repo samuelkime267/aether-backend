@@ -91,4 +91,7 @@ src/
 ## API Documentation
 
 Swagger API documentation is automatically generated. When the server is running, visit:
-[http://localhost:3000/api/docs](http://localhost:3000/api/docs)
+[http://localhost:3000/doc](http://localhost:3000/doc)
+
+The raw OpenAPI JSON spec is served at `GET /doc-json` — the frontend can fetch this to
+discover every route and its request/response schema programmatically.

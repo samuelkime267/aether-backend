@@ -3,6 +3,7 @@ import { User } from '@prisma/client';
 import * as bcrypt from 'bcryptjs';
 import { PrismaService } from '../prisma/prisma.service';
 import { AuthService } from './auth.service';
+import { GoogleService } from './google.service';
 import { SiweService } from './siwe.service';
 import { TokenService } from './token.service';
 
@@ -17,6 +18,7 @@ function makeUser(overrides: Partial<User> = {}): User {
     id: 'user-1',
     email: 'user@example.com',
     passwordHash: 'hashed-password',
+    googleId: null,
     address: null,
     username: 'alice',
     firstName: null,
@@ -89,6 +91,28 @@ function makePrismaMock(tx: ReturnType<typeof makeTxMock>) {
       update: jest.fn().mockResolvedValue({}),
       updateMany: jest.fn().mockResolvedValue({ count: 1 }),
     },
+    userSettings: {
+      findUnique: jest.fn(),
+      create: jest.fn().mockResolvedValue({
+        id: 'settings-1',
+        userId: 'user-1',
+        selectedModel: 'aether-crypto-v1',
+        saveHistory: true,
+        compactSidebar: false,
+        createdAt: now,
+        updatedAt: now,
+      }),
+      update: jest.fn().mockImplementation(({ data }) => ({
+        id: 'settings-1',
+        userId: 'user-1',
+        selectedModel: 'aether-crypto-v1',
+        saveHistory: true,
+        compactSidebar: false,
+        createdAt: now,
+        updatedAt: now,
+        ...data,
+      })),
+    },
     $transaction: jest.fn((cb: (client: unknown) => unknown) => cb(tx)),
   };
 }
@@ -111,12 +135,19 @@ function makeSiweServiceMock() {
   };
 }
 
+function makeGoogleServiceMock() {
+  return {
+    verifyIdToken: jest.fn(),
+  };
+}
+
 describe('AuthService', () => {
   let service: AuthService;
   let tx: ReturnType<typeof makeTxMock>;
   let prisma: ReturnType<typeof makePrismaMock>;
   let tokenService: ReturnType<typeof makeTokenServiceMock>;
   let siweService: ReturnType<typeof makeSiweServiceMock>;
+  let googleService: ReturnType<typeof makeGoogleServiceMock>;
   const ctx = { userAgent: 'test-agent', ip: '127.0.0.1' };
 
   beforeEach(() => {
@@ -124,11 +155,13 @@ describe('AuthService', () => {
     prisma = makePrismaMock(tx);
     tokenService = makeTokenServiceMock();
     siweService = makeSiweServiceMock();
+    googleService = makeGoogleServiceMock();
 
     service = new AuthService(
       prisma as unknown as PrismaService,
       tokenService as unknown as TokenService,
       siweService as unknown as SiweService,
+      googleService as unknown as GoogleService,
     );
   });
 
@@ -494,15 +527,24 @@ describe('AuthService', () => {
         user: {
           id: 'user-1',
           address: null,
+          walletAddress: null,
           email: 'user@example.com',
+          name: 'alice',
           username: 'alice',
           firstName: null,
           lastName: null,
           role: 'USER',
           tier: 'FREE',
+          authType: 'WALLET',
+          googleId: null,
           createdAt: now,
         },
         authType: 'WALLET',
+        settings: {
+          selectedModel: 'aether-crypto-v1',
+          saveHistory: true,
+          compactSidebar: false,
+        },
       });
     });
 
